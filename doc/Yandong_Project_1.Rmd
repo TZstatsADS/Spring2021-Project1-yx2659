@@ -1,0 +1,32 @@
+---
+title: "Project 1"
+author: "Yandong Xiong"
+date: "1/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data exploring
+
+```{r}
+library(tidyverse)
+library(haven)
+dt <- read_sav("anes_timeseries_2016.sav")
+head(dt)
+dim(dt)
+#head(str(dt))
+
+data <- dt %>% rename(ID = V160001, gender = V161002, choice = V161006, interview_mode = V160501, state = V161010e) %>%
+  filter(V161005 == 1, choice %in% c(1,2,5)) %>%
+  mutate(ID = 1:length(V161005), 
+         gender = ifelse(gender == 1, "male", "female"), 
+         interview_mode = ifelse(interview_mode == 1, "FTF", "Web"),
+         choice = ifelse(choice == 1, "Obama", ifelse(choice == 2, "Romney", "Other"))) %>%
+  select(ID, gender, interview_mode, state, choice)
+head(data)
+nrow(data)
+```
+
