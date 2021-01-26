@@ -11,22 +11,155 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Data exploring
 
-```{r}
+```{r Manipulation}
+# change the working directory to the data file location
+setwd("~/Documents/GitHub/Spring2021-Project1-yx2659/data") 
+
+# load packages needed
 library(tidyverse)
 library(haven)
+
+# read the dataset
 dt <- read_sav("anes_timeseries_2016.sav")
+
+# basic lookup for the raw dataset
 head(dt)
 dim(dt)
-#head(str(dt))
 
-data <- dt %>% rename(ID = V160001, gender = V161002, choice = V161006, interview_mode = V160501, state = V161010e) %>%
-  filter(V161005 == 1, choice %in% c(1,2,5)) %>%
-  mutate(ID = 1:length(V161005), 
-         gender = ifelse(gender == 1, "male", "female"), 
+# manipulations for research questions
+# rename the variables
+data <- dt %>% rename(ID = V160001, gender = V161002, interview_mode = V160501, state = V161010e, registration_turnout_status = V162065x, 
+                      education = V161270, race = V161310x, presidential_vote = V162062x, House_vote = V162067x, Senate_vote = V162068x,
+                      Governer_vote = V162069x
+                      ) %>%
+  # create and modify new variables
+  mutate(registration_turnout_status = ifelse(registration_turnout_status == 0, "not registered, not voted",
+                                              ifelse(registration_turnout_status == 1, "registered, not voted",
+                                                     ifelse(registration_turnout_status == 2, "registered, voted", NA))),
+         presidential_vote = ifelse(presidential_vote == 1, "Clinton",
+                                    ifelse(presidential_vote == 2, "Trump",
+                                           ifelse(presidential_vote == 3, "Johnson",
+                                                  ifelse(presidential_vote == 4, "Stein",
+                                                         ifelse(presidential_vote == 5, "others", "no vote"))))),
+         House_vote = ifelse(House_vote == 1, "Democratic",
+                             ifelse(House_vote == 2, "Republican",
+                                    ifelse(House_vote == 3, "others", "no vote"))),
+         Senate_vote = ifelse(Senate_vote == 1, "Democratic",
+                             ifelse(Senate_vote == 2, "Republican",
+                                    ifelse(Senate_vote == 3, "others", "no vote"))),
+         Governer_vote = ifelse(Governer_vote == 1, "Democratic",
+                             ifelse(Governer_vote == 2, "Republican",
+                                    ifelse(Governer_vote == 3, "others", "no vote"))),
+         gender = ifelse(gender == 1, "male", ifelse(gender == 2, "female", NA)), 
          interview_mode = ifelse(interview_mode == 1, "FTF", "Web"),
-         choice = ifelse(choice == 1, "Obama", ifelse(choice == 2, "Romney", "Other"))) %>%
-  select(ID, gender, interview_mode, state, choice)
-head(data)
-nrow(data)
+         race = ifelse(race == 1, "white", 
+                       ifelse(race == 2, "black",
+                              ifelse(race == 3, "Asian",
+                                     ifelse(race == 4, "Native American or Alaska Native",
+                                            ifelse(race == 5, "Hispanic", 
+                                                   ifelse(race == 6, "other", NA)))))),
+         education  = ifelse(education %in% 1:8, "less than high school graduate", 
+                             ifelse(education %in% c(9,90), "high school graduate", 
+                                    ifelse(education == 10, "college but no degree",
+                                           ifelse(education %in% c(11,12), "associate college degree", 
+                                                  ifelse(education == 13, "bachelor's degree",
+                                                         ifelse(education == 14, "master's degree",
+                                                                ifelse(education == 15, "professional school degree", "doctoral degree")))))))
+         ) %>%
+  # drop rows that respondents do not want to share the information for vote registration status and races or respond not avaliable
+  filter(!is.na(registration_turnout_status) & !is.na(race)) %>%
+  # select nedded variables useful for the research questions
+  select(ID, interview_mode, gender, state, education, race, registration_turnout_status, presidential_vote, House_vote, Senate_vote, Governer_vote)
+
+# basic lookup on the manipulated dataset
+head(data, n=10)
+dim(data)
+```
+
+```{r Inspections}
+# Inspections for each variables 
+(mod = data %>% count(interview_mode) %>% mutate(propotion = round(n/sum(n),2)))
+pie_mod = ggplot(mod, aes(x = "", y = propotion, fill = interview_mode)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_mod
+
+(gen = data %>% count(gender) %>% mutate(propotion = round(n/sum(n),2)))
+pie_gen = ggplot(gen, aes(x = "", y = propotion, fill = gender, na.rm = FALSE)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_gen
+
+(sta = data %>% count(state, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_sta = ggplot(sta, aes(x = "", y = propotion, fill = state)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_sta
+
+(rac = data %>% count(race, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_race = ggplot(rac, aes(x = "", y = propotion, fill = race)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_race
+
+(edu = data %>% count(education, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_edu = ggplot(edu, aes(x = "", y = propotion, fill = education)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_edu
+
+(vote_status = data %>% count(registration_turnout_status, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_vote_status = ggplot(vote_status, aes(x = "", y = propotion, fill = registration_turnout_status)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_vote_status
+
+(pre_vote = data %>% count(presidential_vote, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_pre_vote = ggplot(pre_vote, aes(x = "", y = propotion, fill = presidential_vote)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_pre_vote
+
+(hou_vote = data %>% count(House_vote, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_hou_vote = ggplot(hou_vote, aes(x = "", y = propotion, fill = House_vote)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_hou_vote
+
+(gov_vote = data %>% count(Governer_vote, sort = TRUE) %>% mutate(propotion = round(n/sum(n),2)))
+pie_gov_vote = ggplot(gov_vote, aes(x = "", y = propotion, fill = Governer_vote)) +
+  geom_bar(stat = "identity") + 
+  coord_polar("y") + theme_void()
+pie_gov_vote
+```
+
+
+```{r Visualization}
+df1 = data %>% group_by(presidential_vote) %>% mutate(count = n())
+ggplot(df1) +
+  geom_bar(mapping = aes(x = reorder(presidential_vote, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "",
+    x = ""
+  )
+
+df2 = data %>% group_by(education) %>% mutate(count = n())
+ggplot(df2) +
+  geom_bar(mapping = aes(x = reorder(education, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "",
+    x = ""
+  )
+
+df3 = data %>% group_by(race) %>% mutate(count = n())
+ggplot(df3) +
+  geom_bar(mapping = aes(x = reorder(race, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "",
+    x = ""
+  )
 ```
 
