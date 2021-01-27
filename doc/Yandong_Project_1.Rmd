@@ -7,17 +7,25 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# load packages needed
+require(tidyverse)
+require(haven)
+require(kableExtra)
 ```
+
+# Introduction
+
+This project is to look deeper into the patterns and characteristics of voter behaviors to the 2016 Election. The dataset, downloaded from ANES website, was designed and collected by the ANES Principal Investigators and staff with design input from the ANES advisory board and contributors to the ANES Online Commons. 
+
+The initial part is "Data Exploring", which includes import, manipulations and basic view on the raw dataset. Then, "Inspection" for each variable in the studied dataset. Finally, "Visualization" on properties and patterns of the voters.
+
 
 # Data exploring
 
 ```{r Manipulation}
 # change the working directory to the data file location
 setwd("~/Documents/GitHub/Spring2021-Project1-yx2659/data") 
-
-# load packages needed
-library(tidyverse)
-library(haven)
 
 # read the dataset
 dt <- read_sav("anes_timeseries_2016.sav")
@@ -76,6 +84,21 @@ head(data, n=10)
 dim(data)
 ```
 
+After manipulations on the raw data, I selected 10 variables to be studied, shown in the following table: 
+
+```{r}
+text_tbl <- data.frame(
+Variable = c("ID", "interview_mode", "gender", "state", "education", "race", 
+              "registration_turnout_status", "presidential_vote", "House_vote",  "Senate_vote", "Governer_vote"), 
+Type = c("Quantitative", rep("Qualitative", 10)),
+Description = c("Case ID", "Mode of interview", "gender of interviewers for FTF mode only", "2-char state Postal abbreviation for sample address", "Highest level of Education", "self-identified race", "2016 registration - turnout status", "2016 Presidential vote", "party of 2016 U.S. House vote", "party of 2016 U.S. Senate vote", "party of 2016 Governor vote"))
+kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1, bold = T, color = "red")
+```
+
+# Inspection
+
+Some inspections on each variable based on their distributions:
+
 ```{r Inspections}
 # Inspections for each variables 
 (mod = data %>% count(interview_mode) %>% mutate(propotion = round(n/sum(n),2)))
@@ -132,6 +155,8 @@ pie_gov_vote = ggplot(gov_vote, aes(x = "", y = propotion, fill = Governer_vote)
   coord_polar("y") + theme_void()
 pie_gov_vote
 ```
+
+
 
 
 ```{r Visualization}
