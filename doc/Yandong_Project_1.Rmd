@@ -18,7 +18,7 @@ require(kableExtra)
 
 This project is to look deeper into the patterns and characteristics of voter behaviors to the 2016 Election. The dataset, downloaded from ANES website, was designed and collected by the ANES Principal Investigators and staff with design input from the ANES advisory board and contributors to the ANES Online Commons. 
 
-The initial part is "Data Exploring", which includes import, manipulations and basic view on the raw dataset. Then, "Inspection" for each variable in the studied dataset. Finally, "Visualization" on properties and patterns of the voters.
+The initial part is "Data Exploring", which includes import, manipulations and basic view on the raw dataset. Then, "Inspection" for each variable in the studied dataset. In addition, "Visualization" on properties and patterns of the voters. The fianl part is discussing people's registration-turnout status based on two properties. 
 
 
 # Data exploring
@@ -86,7 +86,7 @@ dim(data)
 
 After manipulations on the raw data, I selected 10 variables to be studied, shown in the following table: 
 
-```{r}
+```{r, echo=FALSE}
 text_tbl <- data.frame(
 Variable = c("ID", "interview_mode", "gender", "state", "education", "race", 
               "registration_turnout_status", "presidential_vote", "House_vote",  "Senate_vote", "Governer_vote"), 
@@ -99,7 +99,7 @@ kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1,
 
 Some inspections on each variable based on their distributions:
 
-```{r Inspections}
+```{r Inspections, , echo=FALSE}
 # Inspections for each variables 
 (mod = data %>% count(interview_mode) %>% mutate(propotion = round(n/sum(n),2)))
 pie_mod = ggplot(mod, aes(x = "", y = propotion, fill = interview_mode)) +
@@ -156,30 +156,76 @@ pie_gov_vote = ggplot(gov_vote, aes(x = "", y = propotion, fill = Governer_vote)
 pie_gov_vote
 ```
 
+>
+  From those pie plots and proportion tables for each variable, we can roughly check if they look invalid or strange, i.e. the equal proportion of the male and the female looks good, the major part in race of the observations, white, as expected, and so on. Therefore, it is valid and convincing to do futher investigation on the dataset after manipulations.
 
 
+# Visualization
 
-```{r Visualization}
+```{r Visualization, echo=FALSE}
 df1 = data %>% group_by(presidential_vote) %>% mutate(count = n())
 ggplot(df1) +
   geom_bar(mapping = aes(x = reorder(presidential_vote, -count), fill = registration_turnout_status)) +
   coord_flip() + 
   labs(
-    title = "",
+    title = "President vote over registration-turnout status",
     x = ""
   )
 
-df2 = data %>% group_by(education) %>% mutate(count = n())
+df2 = data %>% group_by(Senate_vote) %>% mutate(count = n())
 ggplot(df2) +
+  geom_bar(mapping = aes(x = reorder(Senate_vote, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "Senate vote over registration-turnout status",
+    x = ""
+  )
+
+df3 = data %>% group_by(House_vote) %>% mutate(count = n())
+ggplot(df3) +
+  geom_bar(mapping = aes(x = reorder(House_vote, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "House vote over registration-turnout status",
+    x = ""
+  )
+
+df4 = data %>% group_by(Governer_vote) %>% mutate(count = n())
+ggplot(df4) +
+  geom_bar(mapping = aes(x = reorder(Governer_vote, -count), fill = registration_turnout_status)) +
+  coord_flip() + 
+  labs(
+    title = "Govern vote over registration-turnout status",
+    x = ""
+  )
+```
+
+>
+  The above 4 plots presents the distribution of votes for "president_vote", "Senate_vote", "House_vote" and "Governer_vote". Clinton and Trump are the most popular candidates despite Clinton a little ahead. For Senate, House and Governer vite, Republican and eocratic have close votes. Democratic is a little ahead in Senate and Governer vote though Republican is a little ahead in House vote.
+
+
+# Whethere the highest education degree you have would affact your registation-turnout status?
+
+```{r, echo=FALSE}
+df5 = data %>% group_by(education) %>% mutate(count = n())
+ggplot(df5) +
   geom_bar(mapping = aes(x = reorder(education, -count), fill = registration_turnout_status)) +
   coord_flip() + 
   labs(
     title = "",
     x = ""
   )
+```
 
-df3 = data %>% group_by(race) %>% mutate(count = n())
-ggplot(df3) +
+>
+  From the plot above, we find that some obervations in each group did not register and not vote, also almost of each group registered to vote. However, 
+in the top 3 education degree, "doctoral degree", "master degree" and "professional school degree", their proportions of "registered, voted" are the highest; in "less than high school graduate", "high school graduate" and "associate college degree", their propotions of "registered, voted" are likely the lowest.Therefore, we could conclude that the person with higher education would be more likely to vote on the president.
+
+# Whether the race difference would affact your registration-turnout status?
+
+```{r, echo=FALSE}
+df6 = data %>% group_by(race) %>% mutate(count = n())
+ggplot(df6) +
   geom_bar(mapping = aes(x = reorder(race, -count), fill = registration_turnout_status)) +
   coord_flip() + 
   labs(
@@ -188,3 +234,5 @@ ggplot(df3) +
   )
 ```
 
+>
+  From the plot above, it is the same as we see in the previous question that each group has some obervations "not registered, not voted" and the majority "registerde, voted". The propotions on each group of "registered, voted" looks likely equal, which means race difference would not affact people's regitrtion-turnout status.
